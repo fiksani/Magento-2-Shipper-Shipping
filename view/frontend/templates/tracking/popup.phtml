@@ -1,0 +1,142 @@
+<?php
+/**
+ * Copyright © Magento, Inc. All rights reserved.
+ * See COPYING.txt for license details.
+ */
+
+/** @var $block \Magento\Shipping\Block\Tracking\Popup */
+/** @var \Fandi\Shipping\ViewModel\Tracking $trackingModel */
+//phpcs:disable Magento2.Files.LineLength.MaxExceeded
+
+$results = $block->getTrackingInfo();
+$trackingModel = $block->getData('tracking_view_model');
+?>
+<div class="page tracking">
+    <?php if (!empty($results)) : ?>
+        <?php foreach ($results as $shipId => $result) : ?>
+            <?php if ($shipId) : ?>
+                <div class="order subtitle caption"><h2><?= /* @noEscape */ $block->escapeHtml(__('Shipment #')) . $shipId ?></h2></div>
+            <?php endif; ?>
+            <?php if (!empty($result)) : ?>
+                <?php foreach ($result as $counter => $track) : ?>
+                    <?php $trackDetail = $trackingModel->getTrackingInfo($track['number']) ?>
+                    <table class="data table order tracking" id="tracking-table-popup-<?= $block->escapeHtml($track['number']) ?>">
+                        <caption class="table-caption"><?= $block->escapeHtml(__('Order tracking')) ?></caption>
+                        <tbody>
+                            <tr>
+                                <th class="col label" scope="row"><?= $block->escapeHtml(__('Tracking Number:')) ?></th>
+                                <td class="col value"><?= $block->escapeHtml($track['number']) ?></td>
+                            </tr>
+                            <tr>
+                                <th class="col label" scope="row"><?= $block->escapeHtml(__('Carrier:')) ?></th>
+                                <td class="col value"><?= $block->escapeHtml($track['title']) ?></td>
+                            </tr>
+                            <?php if ($trackDetail && $trackDetail->detail): ?>
+                                <?php if ($consigner = $trackDetail->detail->consigner): ?>
+                                <tr>
+                                    <th class="col label" scope="row"><?= $block->escapeHtml(__('Consigner:')) ?></th>
+                                    <td class="col value"><?= $block->escapeHtml($consigner->name) ?> ( <?= $block->escapeHtml($consigner->phoneNumber) ?> )</td>
+                                </tr>
+                                <?php endif ?>
+                                <?php if ($consignee = $trackDetail->detail->consignee): ?>
+                                <tr>
+                                    <th class="col label" scope="row"><?= $block->escapeHtml(__('Consignee:')) ?></th>
+                                    <td class="col value"><?= $block->escapeHtml($consignee->name) ?> ( <?= $block->escapeHtml($consignee->phoneNumber) ?> )</td>
+                                </tr>
+                                <?php endif ?>
+                                <?php if ($origin = $trackDetail->detail->origin): ?>
+                                <tr>
+                                    <th class="col label" scope="row"><?= $block->escapeHtml(__('Origin:')) ?></th>
+                                    <td class="col value"><?= $block->escapeHtml($origin->address) ?></td>
+                                </tr>
+                                <?php endif ?>
+                                <?php if ($destination = $trackDetail->detail->destination): ?>
+                                <tr>
+                                    <th class="col label" scope="row"><?= $block->escapeHtml(__('Destination:')) ?></th>
+                                    <td class="col value"><?= $block->escapeHtml($destination->address) ?></td>
+                                </tr>
+                                <?php endif ?>
+                                <?php if ($package = $trackDetail->detail->package): ?>
+                                <tr>
+                                    <th class="col label" scope="row"><?= $block->escapeHtml(__('Items:')) ?></th>
+                                    <td class="col value"><?= $block->escapeHtml($package->contents) ?></td>
+                                </tr>
+                                <?php endif ?>
+                            <?php endif ?>
+                        </tbody>
+                    </table>
+                    <?php if ($trackDetail): ?>
+                    <div class="table-wrapper">
+                        <table class="data table order tracking" id="track-status-table-<?= $block->escapeHtml($track['number']) ?>" border="1">
+                            <caption class="table-caption"><?= $block->escapeHtml(__('Track Status')) ?></caption>
+                            <thead>
+                            <tr>
+                                <th class="col location" scope="col"><?= $block->escapeHtml(__('Date')) ?></th>
+                                <th class="col date" scope="col"><?= $block->escapeHtml(__('Status')) ?></th>
+                                <th class="col time" scope="col"><?= $block->escapeHtml(__('Logistic')) ?></th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            <?php foreach ($trackDetail->tracking as $detail) : ?>
+                                <tr>
+                                    <td data-th="<?= $block->escapeHtmlAttr(__('Date')) ?>" class="col date">
+                                        <?= (!empty($detail->createdDate) ? $block->escapeHtml($detail->createdDate) : '') ?>
+                                    </td>
+                                    <td data-th="<?= $block->escapeHtmlAttr(__('Status')) ?>" class="col status">
+                                        <?php if (!empty($detail->trackStatus)): ?>
+                                            <strong><?= $block->escapeHtml($detail->trackStatus->name) ?></strong>
+                                            <br>
+                                            <?= $block->escapeHtml($detail->trackStatus->description) ?>
+                                        <?php endif ?>
+                                    </td>
+                                    <td data-th="<?= $block->escapeHtmlAttr(__('Logistic')) ?>" class="col logistic">
+                                        <?php if (!empty($detail->logisticStatus)): ?>
+                                            <ul>
+                                            <?php foreach ($detail->logisticStatus as $logistic): ?>
+                                                <li>
+                                                    <dl>
+                                                    <dt><?= $logistic->name ?></dt>
+                                                    <dd><?= $logistic->description ?></dd>
+                                                        </dl>
+                                                </li>
+                                            <?php endforeach ?>
+                                            </ul>
+                                        <?php endif ?>
+                                    </td>
+                                </tr>
+                            <?php endforeach; ?>
+                            </tbody>
+                        </table>
+                    </div>
+                    <?php endif ?>
+                <?php endforeach; ?>
+            <?php else : ?>
+                <div class="message info empty">
+                    <div><?= $block->escapeHtml(__('There is no tracking available for this shipment.')) ?></div>
+                </div>
+            <?php endif; ?>
+        <?php endforeach; ?>
+    <?php else : ?>
+        <div class="message info empty">
+            <div><?= $block->escapeHtml(__('There is no tracking available.')) ?></div>
+        </div>
+    <?php endif; ?>
+    <div class="actions">
+        <button type="button"
+                title="<?= $block->escapeHtmlAttr(__('Close Window')) ?>"
+                class="action close"
+                onclick="window.close(); window.opener.focus();">
+            <span><?= $block->escapeHtml(__('Close Window')) ?></span>
+        </button>
+    </div>
+</div>
+<script>
+    require([
+        'jquery'
+    ], function (jQuery) {
+        /* hide the close button when the content doesn't open in a modal window */
+        if (window.opener === null || typeof window.opener === "undefined") {
+            jQuery('.actions button.close').hide();
+        }
+    });
+</script>
